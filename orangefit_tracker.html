@@ -115,7 +115,7 @@
         </div>
 
         <div class="card" style="background: #E8F5E9;">
-            <h3>📨 Automatisch naar Google Sheet</h3>
+            <h3>📨 Verzend naar Google Sheet</h3>
             <div class="info">
                 ✅ Apps Script is gekoppeld!<br>
                 <br>
@@ -124,6 +124,16 @@
             </div>
             <button onclick="sendToGoogleSheet()" style="background: #2E7D32;" id="sendBtn">📤 Verzend (en tel op bij vandaag)</button>
             <div id="sendStatus" style="margin-top: 10px; font-weight: bold; text-align: center;"></div>
+        </div>
+
+        <div class="card" style="background: #FFF3E0;">
+            <h3>📊 Mijn Google Sheet</h3>
+            <div class="info">
+                Plak hier je Google Sheet link zodat je hem rechtstreeks uit de app kunt openen!
+            </div>
+            <input type="text" id="sheetLink" placeholder="Plak je Google Sheet link hier..." style="font-size: 14px; padding: 12px;">
+            <button onclick="openGoogleSheet()" style="background: #FF9800; margin-top: 10px;">📂 Open Google Sheet</button>
+            <div id="sheetStatus" style="margin-top: 8px; font-size: 13px; color: #999;"></div>
         </div>
 
         <button class="reset" onclick="resetDay()">🔄 Reset Dag</button>
@@ -243,6 +253,21 @@
             }).catch(() => alert('Kopiëren mislukt.'));
         }
 
+        function openGoogleSheet() {
+            const link = document.getElementById('sheetLink').value;
+            if (!link) {
+                document.getElementById('sheetStatus').textContent = '⚠️ Vul eerst je sheet link in!';
+                return;
+            }
+            // Bewaar de link zodat hij volgende keer nog staat
+            localStorage.setItem('sheetLink', link);
+            document.getElementById('sheetStatus').textContent = '✅ Link opgeslagen! Openen...';
+            window.open(link, '_blank');
+            setTimeout(() => {
+                document.getElementById('sheetStatus').textContent = '';
+            }, 2000);
+        }
+
         function sendToGoogleSheet() {
             const scriptUrl = 'https://script.google.com/macros/s/AKfycby8pSZ7Qxr-fPITSd8QdrMlWmEe6-2FP6v8XLx9oIaCrh9xvudDIQIbi_BlcTYb_SeV/exec';
             const datum = getDate();
@@ -281,6 +306,12 @@
         }
 
         update();
+
+        // Laad opgeslagen sheet link bij het starten van de app
+        const savedSheetLink = localStorage.getItem('sheetLink');
+        if (savedSheetLink) {
+            document.getElementById('sheetLink').value = savedSheetLink;
+        }
 
         // Registreer Service Worker voor PWA functionaliteit
         if ('serviceWorker' in navigator) {
