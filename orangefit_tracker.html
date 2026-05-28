@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6F00">
+    <meta name="description" content="Track je dagelijkse voeding en calorieën met Orangefit">
+    <link rel="manifest" href="manifest.json">
+    <title>Orangefit Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #fff8f0, #f0faf0); padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #FF6F00; text-align: center; margin-bottom: 10px; }
+        .total { font-size: 50px; font-weight: bold; color: #2E7D32; text-align: center; margin: 15px 0; }
+        .card { background: white; padding: 15px; margin: 12px 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card h3 { margin: 0 0 12px 0; color: #FF6F00; font-size: 16px; }
+        .item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .item:last-child { border-bottom: none; }
+        .item label { flex: 1; cursor: pointer; font-size: 14px; }
+        .item span { color: #FF6F00; font-weight: bold; white-space: nowrap; }
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        input[type="number"], input[type="text"] { width: 100%; padding: 10px; margin: 8px 0; border: 2px solid #FFE0B2; border-radius: 6px; font-size: 15px; }
+        input[type="range"] { width: 100%; margin: 10px 0; }
+        button { background: #FF6F00; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin: 8px 0; font-size: 15px; font-weight: bold; }
+        button:hover { background: #E65100; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button { flex: 1; margin: 0; padding: 10px; }
+        .reset { background: #D32F2F; }
+        .reset:hover { background: #B71C1C; }
+        .info { background: #FFF3E0; padding: 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; line-height: 1.5; }
+        select { width: 100%; padding: 10px; margin: 8px 0; border: 2px solid #FFE0B2; border-radius: 6px; font-size: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍊 Mijn Voedingstracker</h1>
+        <div class="total" id="total">0 kcal</div>
+        
+        <!-- ONTBIJT MET MELKKEUZE EN KOFFIE -->
+        <div class="card">
+            <h3>☀️ Ontbijt (07:30-08:30)</h3>
+            
+            <div style="font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #555;">1. Maak je Shake:</div>
+            <div class="item">
+                <input type="checkbox" id="shake" onchange="update()">
+                <label for="shake">Orangefit Diet Shake (1 schepje, 230 kcal)</label>
+            </div>
+            
+            <select id="vloeistof" onchange="update()" style="margin-top: 5px; margin-bottom: 15px;">
+                <option value="0">Aangemaakt met: Water (0 kcal)</option>
+                <option value="30">Aangemaakt met: Magere melk 300ml (+30 kcal)</option>
+            </select>
+
+            <div style="font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #555;">2. Extra Koffie (Ochtend):</div>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #666;">Zwarte koffie<br><span style="font-size: 11px; color: #999;">2 kcal per kopje</span></label>
+                    <input type="number" id="koffiZwart" min="0" value="0" onchange="update()" placeholder="Aantal" style="margin: 3px 0; font-size: 16px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #666;">Met magere melk<br><span style="font-size: 11px; color: #999;">35 kcal per kopje</span></label>
+                    <input type="number" id="koffieMetMelk" min="0" value="0" onchange="update()" placeholder="Aantal" style="margin: 3px 0; font-size: 16px;">
+                </div>
+            </div>
+
+            <div id="ontbijtTotal" style="text-align: right; margin-top: 10px; font-weight: bold; color: #FF6F00; font-size: 16px;"></div>
+        </div>
+
+        <div class="card">
+            <h3>🌿 Ochtend (10:30-11:00)</h3>
+            <div class="item"><input type="checkbox" onchange="update()" data-cal="10"> <label>Orangefit Greens (1 maatschepje in glas water)</label> <span>10 kcal</span></div>
+        </div>
+
+        <div class="card">
+            <h3>🥗 Lunch (12:30-13:30)</h3>
+            <div class="item"><input type="checkbox" onchange="update()" data-cal="275"> <label>Yoghurt/kwark (150-200g) + granola (40g)</label> <span>275 kcal</span></div>
+            <div class="item"><input type="checkbox" onchange="update()" data-cal="30"> <label>Handje bessen (±30g)</label> <span>30 kcal</span></div>
+        </div>
+
+        <div class="card">
+            <h3>🧀 Middag Snack (15:30-16:00)</h3>
+            <div class="item"><input type="checkbox" class="snack" onchange="updateSnack(this)" data-cal="258"> <label>3 Cracotte (3x 7,5g) + 3 plakjes kaas (50g)</label> <span>258 kcal</span></div>
+            <div class="item"><input type="checkbox" class="snack" onchange="updateSnack(this)" data-cal="320"> <label>4 Cracotte (4x 7,5g) + 4 plakjes kaas (70g)</label> <span>320 kcal</span></div>
+        </div>
+
+        <div class="card">
+            <h3>🍽️ Diner (18:00-19:00)</h3>
+            <input type="number" id="diner" placeholder="Vul diner calorieën in..." onchange="update()">
+            <div class="btn-group">
+                <button onclick="setDiner(500)" style="background: #FF9800;">500</button>
+                <button onclick="setDiner(600)" style="background: #FF9800;">600</button>
+                <button onclick="setDiner(700)" style="background: #FF9800;">700</button>
+                <button onclick="setDiner(800)" style="background: #FF9800;">800</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🌙 Avond Snack (20:30)</h3>
+            <label>Kruidenthee/snackgroenten: <strong id="snackVal">0</strong> kcal</label>
+            <input type="range" id="snack" min="0" max="50" value="0" onchange="update()">
+        </div>
+
+        <div class="card">
+            <h3>🍴 Overige Voeding</h3>
+            <label style="font-size: 14px; color: #666; margin-bottom: 8px; display: block;">Extra voeding die je nog hebt gegeten:</label>
+            <input type="number" id="overig" placeholder="Vul extra kcal in..." min="0" value="0" onchange="update()" style="font-size: 16px;">
+            <div id="overigeTotal" style="text-align: right; margin-top: 5px; font-weight: bold; color: #FF6F00;"></div>
+        </div>
+
+        <div class="card" style="background: #FFF3E0;">
+            <h3>📊 Exporteer Data</h3>
+            <button onclick="downloadCSV()">📥 Download CSV (Excel)</button>
+            <button onclick="copyToClipboard()" style="background: #2E7D32;">📋 Kopieer naar Google Sheets</button>
+        </div>
+
+        <div class="card" style="background: #E8F5E9;">
+            <h3>📨 Verzend naar Google Sheet</h3>
+            <div class="info">
+                ✅ Apps Script is gekoppeld!<br>
+                <br>
+                <strong>NIEUW:</strong> Je kunt nu <b>meerdere keren per dag</b> op verzenden klikken. <br>
+                Zorg wel dat je na het verzenden je app <b>reset</b> of alleen de NIEUWE dingen aanvinkt, want hij telt het op bij wat al in je sheet staat!
+            </div>
+            <button onclick="sendToGoogleSheet()" style="background: #2E7D32;" id="sendBtn">📤 Verzend (en tel op bij vandaag)</button>
+            <div id="sendStatus" style="margin-top: 10px; font-weight: bold; text-align: center;"></div>
+        </div>
+
+        <div class="card" style="background: #FFF3E0;">
+            <h3>📊 Mijn Google Sheet</h3>
+            <div class="info">
+                Plak hier je Google Sheet link zodat je hem rechtstreeks uit de app kunt openen!
+            </div>
+            <input type="text" id="sheetLink" placeholder="Plak je Google Sheet link hier..." style="font-size: 14px; padding: 12px;">
+            <button onclick="openGoogleSheet()" style="background: #FF9800; margin-top: 10px;">📂 Open Google Sheet</button>
+            <div id="sheetStatus" style="margin-top: 8px; font-size: 13px; color: #999;"></div>
+        </div>
+
+        <button class="reset" onclick="resetDay()">🔄 Reset Dag</button>
+    </div>
+
+    <script>
+        function update() {
+            let total = 0;
+            
+            // Shake met melkkeuze en koffie
+            let ontbijtSubtotaal = 0;
+            if (document.getElementById('shake').checked) {
+                ontbijtSubtotaal += 230;
+                const vloeistofExtra = parseInt(document.getElementById('vloeistof').value) || 0;
+                ontbijtSubtotaal += vloeistofExtra;
+            }
+            
+            const koffieZwartAantal = parseInt(document.getElementById('koffiZwart').value) || 0;
+            const koffieZwartKcal = koffieZwartAantal * 2;
+            ontbijtSubtotaal += koffieZwartKcal;
+            
+            const koffieMetMelkAantal = parseInt(document.getElementById('koffieMetMelk').value) || 0;
+            const koffieMetMelkKcal = koffieMetMelkAantal * 35;
+            ontbijtSubtotaal += koffieMetMelkKcal;
+            
+            total += ontbijtSubtotaal;
+            
+            if (ontbijtSubtotaal > 0) {
+                document.getElementById('ontbijtTotal').textContent = 'Subtotaal ochtend: ' + ontbijtSubtotaal + ' kcal';
+            } else {
+                document.getElementById('ontbijtTotal').textContent = '';
+            }
+            
+            // Andere items
+            document.querySelectorAll('input[type="checkbox"]:not(#shake):not(.snack)').forEach(box => {
+                if (box.checked) total += parseInt(box.getAttribute('data-cal')) || 0;
+            });
+            
+            document.querySelectorAll('input.snack:checked').forEach(box => {
+                total += parseInt(box.getAttribute('data-cal')) || 0;
+            });
+            
+            total += parseInt(document.getElementById('diner').value) || 0;
+            total += parseInt(document.getElementById('snack').value) || 0;
+            
+            const overigeVal = parseInt(document.getElementById('overig').value) || 0;
+            total += overigeVal;
+            
+            if (overigeVal > 0) {
+                document.getElementById('overigeTotal').textContent = overigeVal + ' kcal';
+            } else {
+                document.getElementById('overigeTotal').textContent = '';
+            }
+            
+            document.getElementById('total').textContent = total + ' kcal';
+            document.getElementById('snackVal').textContent = document.getElementById('snack').value;
+            
+            let color = '#2E7D32';
+            if (total > 2200) color = '#D32F2F';
+            else if (total > 1800) color = '#FFA726';
+            document.getElementById('total').style.color = color;
+        }
+
+        function updateSnack(checkbox) {
+            if (checkbox.checked) {
+                document.querySelectorAll('input.snack').forEach(box => {
+                    if (box !== checkbox) box.checked = false;
+                });
+            }
+            update();
+        }
+
+        function setDiner(val) {
+            document.getElementById('diner').value = val;
+            update();
+        }
+
+        function resetDay() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(box => box.checked = false);
+            document.getElementById('diner').value = '';
+            document.getElementById('snack').value = 0;
+            document.getElementById('overig').value = '0';
+            document.getElementById('vloeistof').value = '0';
+            document.getElementById('koffiZwart').value = '0';
+            document.getElementById('koffieMetMelk').value = '0';
+            update();
+        }
+
+        function getDate() {
+            const d = new Date();
+            return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
+        }
+
+        function getDay() {
+            const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+            return days[new Date().getDay()];
+        }
+
+        function getTotalKcal() {
+            return document.getElementById('total').textContent.split(' ')[0];
+        }
+
+        function downloadCSV() {
+            const csv = `Datum,Dag,Kcal\n${getDate()},${getDay()},${getTotalKcal()}`;
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Tracker_${getDate()}.csv`;
+            link.click();
+        }
+
+        function copyToClipboard() {
+            const text = `${getDate()}\t${getDay()}\t${getTotalKcal()}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Gekopieerd! Plak in je Google Sheet.');
+            }).catch(() => alert('Kopiëren mislukt.'));
+        }
+
+        function openGoogleSheet() {
+            const link = document.getElementById('sheetLink').value;
+            if (!link) {
+                document.getElementById('sheetStatus').textContent = '⚠️ Vul eerst je sheet link in!';
+                return;
+            }
+            // Bewaar de link zodat hij volgende keer nog staat
+            localStorage.setItem('sheetLink', link);
+            document.getElementById('sheetStatus').textContent = '✅ Link opgeslagen! Openen...';
+            window.open(link, '_blank');
+            setTimeout(() => {
+                document.getElementById('sheetStatus').textContent = '';
+            }, 2000);
+        }
+
+        function sendToGoogleSheet() {
+            const scriptUrl = 'https://script.google.com/macros/s/AKfycby8pSZ7Qxr-fPITSd8QdrMlWmEe6-2FP6v8XLx9oIaCrh9xvudDIQIbi_BlcTYb_SeV/exec';
+            const datum = getDate();
+            const dag = getDay();
+            const kcal = getTotalKcal();
+            
+            const statusDiv = document.getElementById('sendStatus');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            statusDiv.textContent = '⏳ Versturen...';
+            statusDiv.style.color = '#FF6F00';
+            sendBtn.disabled = true;
+            
+            // Create form data
+            const formData = new URLSearchParams();
+            formData.append('datum', datum);
+            formData.append('dag', dag);
+            formData.append('kcal', kcal);
+            
+            fetch(scriptUrl + '?' + formData.toString(), {
+                method: 'POST',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                statusDiv.textContent = '✅ Gelukt! Data toegevoegd aan je Sheet!';
+                statusDiv.style.color = '#2E7D32';
+                sendBtn.disabled = false;
+                setTimeout(() => { statusDiv.textContent = ''; }, 3000);
+            })
+            .catch(error => {
+                statusDiv.textContent = '❌ Fout bij verzenden';
+                statusDiv.style.color = '#D32F2F';
+                sendBtn.disabled = false;
+                console.error('Error:', error);
+            });
+        }
+
+        update();
+
+        // Laad opgeslagen sheet link bij het starten van de app
+        const savedSheetLink = localStorage.getItem('sheetLink');
+        if (savedSheetLink) {
+            document.getElementById('sheetLink').value = savedSheetLink;
+        }
+
+        // Registreer Service Worker voor PWA functionaliteit
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker geregistreerd:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker registratie mislukt:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
