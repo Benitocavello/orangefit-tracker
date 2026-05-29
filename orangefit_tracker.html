@@ -32,7 +32,10 @@
   <div class="wrap">
     <h1>🍊 Orangefit Voedingstracker</h1>
     <div id="total" class="total">0 kcal</div>
-
+    <div style="text-align:center;margin:8px 0;padding:10px;background:#FFF3E0;border-radius:8px;border:2px solid #FFB74D">
+      <div class="muted" style="font-size:13px;margin-bottom:4px">Vandaag totaal verzonden</div>
+      <div id="dailyTotal" style="font-size:32px;font-weight:700;color:#E65100">0 kcal</div>
+    </div>
     <!-- Ontbijt -->
     <div class="card">
       <h3>☀️ Ontbijt</h3>
@@ -45,7 +48,6 @@
         </select>
       </div>
     </div>
-
     <!-- Ochtend tussendoortje: Greens + koffie -->
     <div class="card">
       <h3>🌿 Ochtend tussendoortje</h3>
@@ -59,21 +61,18 @@
         <div class="small muted" style="margin-top:6px">Zwart: 2 kcal/kopje • Met magere melk: 35 kcal/kopje</div>
       </div>
     </div>
-
     <!-- Lunch -->
     <div class="card">
       <h3>🥗 Lunch</h3>
       <div class="row"><label><input type="checkbox" id="lunch" onchange="update()"> Yoghurt/kwark + low-carb granola</label><span>275 kcal</span></div>
       <div class="row"><label><input type="checkbox" id="bessen" onchange="update()"> Handje bessen</label><span>30 kcal</span></div>
     </div>
-
     <!-- Middag Snack -->
     <div class="card">
       <h3>🧀 Middag Snack</h3>
       <div class="row"><label><input type="checkbox" id="cracotte3" onchange="updateMutual(3)"> 3 Cracotte + 3 plakjes kaas</label><span>258 kcal</span></div>
       <div class="row"><label><input type="checkbox" id="cracotte4" onchange="updateMutual(4)"> 4 Cracotte + 4 plakjes kaas</label><span>320 kcal</span></div>
     </div>
-
     <!-- Diner -->
     <div class="card">
       <h3>🍽️ Diner</h3>
@@ -85,7 +84,6 @@
         <button class="btn ghost" onclick="setDiner(800)">800</button>
       </div>
     </div>
-
     <!-- Avond -->
     <div class="card">
       <h3>🌙 Avond</h3>
@@ -93,7 +91,6 @@
       <div style="margin-top:8px"><label class="muted">Nootjes (handjes)</label><input type="number" id="nootjes" min="0" value="0" oninput="update()" /></div>
       <div id="nootjesTotal" class="muted" style="text-align:right;margin-top:6px"></div>
     </div>
-
     <!-- Overige & verbrande kcal -->
     <div class="card">
       <h3>🍴 Overige & Sport</h3>
@@ -101,7 +98,6 @@
       <div><label class="muted">Verbrande kcal (sport)</label><input type="number" id="verbrand" min="0" value="0" oninput="update()" /></div>
       <div id="overigeTotal" class="muted" style="text-align:right;margin-top:6px"></div>
     </div>
-
     <!-- Einde-dag & verzenden -->
     <div class="card">
       <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
@@ -109,7 +105,6 @@
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn ghost" onclick="downloadCSV()">📥 Download CSV</button><button class="btn secondary" onclick="copyToClipboard()">📋 Kopieer voor Sheets</button></div>
       <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
     </div>
-
     <!-- sheet link and open -->
     <div class="card">
       <h3>🗂️ Google Sheet</h3>
@@ -117,18 +112,32 @@
       <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank">Open Sheet</a><button class="btn ghost" onclick="getSheetUrl()">Krijg Sheet URL</button></div>
       <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
     </div>
-
   </div>
-
 <script>
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyF5UPcE3nYPsEwnNk1hJ6UkH1-rJ9VGpEKNRgYzSdhuL3eZs8QDKKTLAHRAMuDfZaZ/exec';
-  // Provided sheet URL (open directly)
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1i_JXNOodNXfDWIV2ncfmOfSPKoBoe-ZyB5xGegNFjqwSSH7cjUSA4OVeUANBfhvU/exec';
   const SHEET_URL = 'https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing';
-
+  const STORAGE_KEY = 'orangefit_daily_total';
+  
   function pad(n){ return n<10? '0'+n : n }
   function getDate(){ const d=new Date(); return pad(d.getDate()) + '-' + pad(d.getMonth()+1) + '-' + d.getFullYear(); }
   function getDay(){ const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag']; return days[new Date().getDay()]; }
-
+  
+  // Load and save daily total from localStorage
+  function loadDailyTotal() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? parseInt(saved, 10) : 0;
+  }
+  function saveDailyTotal(total) {
+    localStorage.setItem(STORAGE_KEY, total.toString());
+  }
+  function updateDailyDisplay(total) {
+    document.getElementById('dailyTotal').textContent = total + ' kcal';
+  }
+  
+  // Initialize daily total on page load
+  let currentDailyTotal = loadDailyTotal();
+  updateDailyDisplay(currentDailyTotal);
+  
   function update(){
     let total = 0;
     if(document.getElementById('shake').checked) total += 230;
@@ -155,10 +164,10 @@
     // progress color
     let color = '#2E7D32'; if(net>2200) color='#D32F2F'; else if(net>1800) color='#FFA726'; document.getElementById('total').style.color = color;
   }
-
+  
   function updateMutual(which){ if(which===3) document.getElementById('cracotte4').checked=false; if(which===4) document.getElementById('cracotte3').checked=false; update(); }
   function setDiner(v){ document.getElementById('diner').value=v; update(); }
-
+  
   async function sendToGoogleSheet(){
     // compute consumed
     let consumed = 0;
@@ -175,32 +184,60 @@
     consumed += parseInt(document.getElementById('avondSnack').value) || 0;
     consumed += (parseInt(document.getElementById('nootjes').value)||0) * 180;
     consumed += parseInt(document.getElementById('overig').value) || 0;
-
     const burned = parseInt(document.getElementById('verbrand').value) || 0;
-    const delta = consumed - burned; // net kcal for this entry
-
+    const delta = consumed - burned;
+    const isEinde = document.getElementById('eindeDag').checked;
+    
     const params = new URLSearchParams();
     params.append('datum', getDate());
     params.append('dag', getDay());
     params.append('kcal', delta);
-    params.append('einde', document.getElementById('eindeDag').checked ? 'true':'false');
-
+    params.append('einde', isEinde ? 'true':'false');
+    
     document.getElementById('sendStatus').textContent = '⏳ Verzenden...';
-    try {
-      await fetch(SCRIPT_URL + '?' + params.toString(), { method:'POST', mode:'no-cors' });
-      document.getElementById('sendStatus').textContent = '✅ Verzonden';
-    } catch(err){
-      document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden';
-      console.error(err);
-    }
+    
+    // Use JSONP for proper callback
+    const callbackName = 'jsonpCallback_' + Date.now();
+    window[callbackName] = function(response) {
+      delete window[callbackName];
+      const script = document.querySelector(`script[src*="${callbackName}"]`);
+      if (script) script.remove();
+      
+      if (response && response.status === 'success') {
+        document.getElementById('sendStatus').textContent = '✅ Verzonden';
+        
+        if (isEinde) {
+          // Reset daily total
+          currentDailyTotal = 0;
+          saveDailyTotal(currentDailyTotal);
+          updateDailyDisplay(currentDailyTotal);
+          document.getElementById('sendStatus').textContent = '✅ Dag afgesloten! Totaal gereset.';
+        } else {
+          // Add to daily total
+          currentDailyTotal += delta;
+          saveDailyTotal(currentDailyTotal);
+          updateDailyDisplay(currentDailyTotal);
+          document.getElementById('sendStatus').textContent = '✅ Verzonden (+' + delta + ' kcal)';
+        }
+      } else {
+        document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden';
+      }
+    };
+    
+    params.append('callback', callbackName);
+    const script = document.createElement('script');
+    script.src = SCRIPT_URL + '?' + params.toString();
+    script.onerror = function() {
+      delete window[callbackName];
+      document.getElementById('sendStatus').textContent = '❌ Netwerk fout';
+    };
+    document.body.appendChild(script);
   }
-
+  
   function downloadCSV(){ const date=getDate(); const day=getDay(); const kcal=document.getElementById('total').textContent.split(' ')[0]; const csv='Datum,Dag,Kcal\n'+date+','+day+','+kcal; const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Orangefit_'+date+'.csv'; document.body.appendChild(a); a.click(); a.remove(); }
-
   function copyToClipboard(){ const date=getDate(); const day=getDay(); const kcal=document.getElementById('total').textContent.split(' ')[0]; navigator.clipboard.writeText(date+'\t'+day+'\t'+kcal).then(()=>alert('Gekopieerd! Plak in je Google Sheet.')).catch(()=>alert('Kopiëren mislukt')) }
-
   async function getSheetUrl(){ try{ const r = await fetch(SCRIPT_URL); const t = await r.text(); document.getElementById('sheetUrl').textContent = t || SHEET_URL; } catch(e){ document.getElementById('sheetUrl').textContent = SHEET_URL; } }
-
+  
   // init
   update();
 </script>
