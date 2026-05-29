@@ -196,42 +196,27 @@
     
     document.getElementById('sendStatus').textContent = '⏳ Verzenden...';
     
-    // Use JSONP for proper callback
-    const callbackName = 'jsonpCallback_' + Date.now();
-    window[callbackName] = function(response) {
-      delete window[callbackName];
-      const script = document.querySelector(`script[src*="${callbackName}"]`);
-      if (script) script.remove();
+    try {
+      await fetch(SCRIPT_URL + '?' + params.toString(), { method:'POST', mode:'no-cors' });
+      document.getElementById('sendStatus').textContent = '✅ Verzonden';
       
-      if (response && response.status === 'success') {
-        document.getElementById('sendStatus').textContent = '✅ Verzonden';
-        
-        if (isEinde) {
-          // Reset daily total
-          currentDailyTotal = 0;
-          saveDailyTotal(currentDailyTotal);
-          updateDailyDisplay(currentDailyTotal);
-          document.getElementById('sendStatus').textContent = '✅ Dag afgesloten! Totaal gereset.';
-        } else {
-          // Add to daily total
-          currentDailyTotal += delta;
-          saveDailyTotal(currentDailyTotal);
-          updateDailyDisplay(currentDailyTotal);
-          document.getElementById('sendStatus').textContent = '✅ Verzonden (+' + delta + ' kcal)';
-        }
+      if (isEinde) {
+        // Reset daily total
+        currentDailyTotal = 0;
+        saveDailyTotal(currentDailyTotal);
+        updateDailyDisplay(currentDailyTotal);
+        document.getElementById('sendStatus').textContent = '✅ Dag afgesloten! Totaal gereset.';
       } else {
-        document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden';
+        // Add to daily total
+        currentDailyTotal += delta;
+        saveDailyTotal(currentDailyTotal);
+        updateDailyDisplay(currentDailyTotal);
+        document.getElementById('sendStatus').textContent = '✅ Verzonden (+' + delta + ' kcal)';
       }
-    };
-    
-    params.append('callback', callbackName);
-    const script = document.createElement('script');
-    script.src = SCRIPT_URL + '?' + params.toString();
-    script.onerror = function() {
-      delete window[callbackName];
-      document.getElementById('sendStatus').textContent = '❌ Netwerk fout';
-    };
-    document.body.appendChild(script);
+    } catch(err){
+      document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden';
+      console.error(err);
+    }
   }
   
   function downloadCSV(){ const date=getDate(); const day=getDay(); const kcal=document.getElementById('total').textContent.split(' ')[0]; const csv='Datum,Dag,Kcal\n'+date+','+day+','+kcal; const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Orangefit_'+date+'.csv'; document.body.appendChild(a); a.click(); a.remove(); }
