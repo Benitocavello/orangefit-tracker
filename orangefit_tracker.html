@@ -211,6 +211,26 @@
         updateDailyDisplay(currentDailyTotal);
         document.getElementById('sendStatus').textContent = '✅ Verzonden (+' + delta + ' kcal)';
       }
+      
+      // Reset form after successful submission
+      document.getElementById('shake').checked = false;
+      document.getElementById('vloeistof').value = '0';
+      document.getElementById('greensShake').checked = false;
+      document.getElementById('coffeeBlack').value = '0';
+      document.getElementById('coffeeMilk').value = '0';
+      document.getElementById('lunch').checked = false;
+      document.getElementById('bessen').checked = false;
+      document.getElementById('cracotte3').checked = false;
+      document.getElementById('cracotte4').checked = false;
+      document.getElementById('diner').value = '';
+      document.getElementById('avondSnack').value = '0';
+      document.getElementById('nootjes').value = '0';
+      document.getElementById('overig').value = '0';
+      document.getElementById('verbrand').value = '0';
+      document.getElementById('eindeDag').checked = false;
+      
+      // Update display to show 0
+      update();
     } catch(err){
       document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden';
       console.error(err);
