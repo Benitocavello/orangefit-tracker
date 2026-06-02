@@ -1,4 +1,4 @@
-<!-- Aangepaste main items (porties) -->
+<!-- Main inputs -->
 <div class="card">
   <h3>☀️ Ontbijt</h3>
   <div class="row"><label><input type="checkbox" id="shake" onchange="update()"> Orangefit Diet Shake</label><span>230 kcal</span></div>
@@ -54,7 +54,7 @@
   <div id="nootjesTotal" class="muted" style="text-align:right;margin-top:6px"></div>
 </div>
 
-<!-- Fruit: selectie + toevoeging (porties) -->
+<!-- Fruit selection -->
 <div class="card">
   <h3>🍏 Fruit</h3>
   <div style="display:flex;gap:8px;align-items:center">
@@ -62,10 +62,10 @@
     <input type="number" id="fruitQty" min="1" value="1" style="width:90px;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
     <button class="btn ghost" id="addFruitBtn">+ Voeg toe</button>
   </div>
-  <div class="muted small" style="margin-top:8px">Standaardporties per item (aanpasbaar via DB)</div>
+  <div class="muted small" style="margin-top:8px">Standaardporties per item (aanpasbaar via Ctrl+M beheer)</div>
 </div>
 
-<!-- Zoeken & DB ( Edamam + lokale DB ) -->
+<!-- Search & DB -->
 <div class="card">
   <h3>🔎 Zoek & Database</h3>
   <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -86,13 +86,25 @@
   <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
 </div>
 
-<div class="card" style="display:none" id="hiddenDbManagerInfo">
-  <p class="muted">Beheer van DB vindt in deze single file plaats (via Ctrl+M shortcut). Geen aparte pagina nodig als je kiest voor alles in dit bestand.</p>
-</div>
-
 <div class="card">
   <h3>🗂️ Google Sheet</h3>
   <div class="muted">Open je gekoppelde Google Sheet direct:</div>
-  <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank" id="openSheetLink">Open Sheet</a><button class="btn ghost" onclick="getSheetUrl()">Krijg Sheet URL</button></div>
+  <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" id="openSheetLink" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank">Open Sheet</a><button class="btn ghost" id="getSheetUrl">Krijg Sheet URL</button></div>
   <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
+</div>
+
+<div class="card hidden" id="dbManager" style="display:none">
+  <h3>🔧 Lokale DB Beheer (Ctrl+M)</h3>
+  <div style="margin-bottom:8px" class="muted">In dit paneel kun je items toevoegen, bewerken, importeren/exporteren en migratie-informatie bekijken. (Verborgen: open met Ctrl+M)</div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <input id="newId" placeholder="id (uniek)" style="width:160px;padding:6px" />
+    <input id="newName" placeholder="Naam (bv. Appel (middel))" style="flex:1;padding:6px" />
+    <input id="newKcal" type="number" placeholder="kcal per portie" style="width:120px;padding:6px" />
+    <input id="newGrams" type="number" placeholder="grams per portie" style="width:120px;padding:6px" />
+    <button id="addNew" class="btn primary">Toevoegen</button>
+  </div>
+  <div id="dbManagerList"></div>
+  <div style="margin-top:10px"><button id="exportDb" class="btn ghost">Export JSON</button> <button id="importDbBtn" class="btn ghost">Import JSON</button> <input type="file" id="importFile" style="display:none" accept="application/json"></div>
+  <div style="margin-top:12px"><button id="resetDb" class="btn ghost">Reset naar standaard</button> <button id="migrateBtn" class="btn ghost">Forceer migratie</button></div>
+  <div style="margin-top:12px"><strong>Migratie log</strong><pre id="migrationLog" class="mono" style="height:120px;overflow:auto"></pre></div>
 </div>
