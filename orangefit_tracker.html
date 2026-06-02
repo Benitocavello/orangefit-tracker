@@ -99,30 +99,29 @@
       <div id="overigeTotal" class="muted" style="text-align:right;margin-top:6px"></div>
     </div>
 
-    <!-- Fruit -->
+    <!-- Zoek voedsel & lokale database -->
     <div class="card">
-      <h3>🍏 Fruit</h3>
-      <div style="display:flex;gap:8px;align-items:center">
+      <h3>🔎 Zoek & Database</h3>
+
+      <div class="muted" style="margin-bottom:6px">Kies uit je lokale database en voeg toe aan je invoer (telt op bij <strong>Overige voeding</strong>).</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
         <select id="fruitSelect" style="flex:1">
           <!-- options populated from local DB -->
         </select>
         <input type="number" id="fruitQty" min="1" value="1" style="width:80px;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
         <button class="btn ghost" id="addFruitBtn">+ Voeg toe</button>
       </div>
-      <div class="muted small" style="margin-top:8px">Standaard porties: appel (middel) = 95 kcal, banaan (middel) = 105 kcal, mandarijn = 47 kcal, druiven (handvol) = 69 kcal, aardbeien (100 g) = 32 kcal, blauwe bessen (100 g) = 57 kcal.</div>
-    </div>
 
-    <!-- Zoek voedsel & lokale database -->
-    <div class="card">
-      <h3>🔎 Zoek & Database</h3>
+      <hr style="margin:12px 0;border:none;border-top:1px solid #f3f3f3" />
+
       <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input type="text" id="searchInput" placeholder="Typ productnaam (bv. Granny Smith)" style="flex:1;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
+        <input type="text" id="searchInput" placeholder="Typ productnaam (bv. appel)" style="flex:1;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
         <button class="btn ghost" id="searchBtn">Zoek</button>
-        <button class="btn ghost" id="configureEdamam">Configureer Edamam</button>
+        <button class="btn ghost" id="configureEdamam">API instellen</button>
       </div>
       <div id="searchResults" class="muted small" style="margin-top:6px"></div>
       <hr style="margin:12px 0;border:none;border-top:1px solid #f3f3f3" />
-      <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Lokale database</div><button class="btn ghost" id="refreshDb">Ververs</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Lokale database (<a href="orangefit-db.html" target="_blank" style="color:#1a73e8;text-decoration:none">beheer pagina</a>)</div><button class="btn ghost" id="refreshDb">Ververs</button></div>
       <div id="dbList" style="margin-top:8px"></div>
     </div>
 
@@ -372,9 +371,37 @@
     // Show first 6 results with 'add to DB' buttons
     document.getElementById('searchResults').innerHTML = hits.slice(0,6).map((h,idx)=>{
       const name = h.food.label || (h.food && h.food.foodId) || 'Onbekend';
-      const kcal = h.food.nutrients && (h.food.nutrients.ENERC_KCAL || h.food.nutrients.ENERC_KCAL) ? Math.round(h.food.nutrients.ENERC_KCAL) : '?';
+      const kcal100 = h.food.nutrients && (h.food.nutrients.ENERC_KCAL || h.food.nutrients.ENERC_KCAL) ? Math.round(h.food.nutrients.ENERC_KCAL) : 0;
+
+      // Convert to standard portion if possible
+      let portieKcal = kcal100;
+      let display = (kcal100 ? `${kcal100} kcal per 100 g` : 'kcal onbekend');
+
+      const lname = name.toLowerCase();
+      const candidates = [
+        { names: ['apple','appel','granny smith','granny'], key: 'apple' },
+        { names: ['banana','banaan'], key: 'banana' },
+        { names: ['mandarin','mandarijn','tangerine','clementine'], key: 'mandarin' },
+        { names: ['grape','druif','druiven','grapes'], key: 'grapes' },
+        { names: ['strawberri','aardbei','strawberry','aardbeien'], key: 'strawberry' },
+        { names: ['blueberri','blauwe bes','blueberry','blauwebessen','blauwebessen'], key: 'blueberry' }
+      ];
+      let matched = null;
+      for(const c of candidates){
+        for(const n of c.names){ if(lname.indexOf(n)!==-1){ matched = c.key; break; } }
+        if(matched) break;
+      }
+
+      if(matched && kcal100>0 && weightTable[matched]){
+        portieKcal = Math.round(kcal100 * (weightTable[matched] / 100));
+        display = `${portieKcal} kcal per standaardportie (${weightTable[matched]} g)`;
+      } else if(kcal100>0) {
+        // If we can't match, we still show kcal100 as info but store it as-is (user can edit in DB manager)
+        display = `${kcal100} kcal (geen portie herkend)`;
+      }
+
       const id = 'ed_' + (h.food.foodId || name).replace(/[^a-z0-9]/gi,'_').toLowerCase();
-      return `<div style=\"padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center\"><div><strong>${name}</strong><div class=\"muted small\">${kcal} kcal per 100 g (kijk goed naar portie)</div></div><button class=\"btn ghost\" onclick=\"addToDbFromSearch('${id}','${encodeURIComponent(name)}',${kcal})\">+ Voeg toe</button></div>`;
+      return `<div style="padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center"><div><strong>${name}</strong><div class="muted small">${display}</div></div><button class="btn ghost" onclick="addToDbFromSearch('${id}','${encodeURIComponent(name)}',${portieKcal})">+ Voeg toe</button></div>`;
     }).join('');
   });
 
@@ -382,40 +409,11 @@
     const name = decodeURIComponent(encodedName);
     const db = loadDB();
     if(db.find(i=>i.id===id)) return alert('Reeds toegevoegd.');
-    let kcalValue = kcal || 0;
-    // Attempt automatic conversion from per-100g to per-portie using weightTable
-    const lname = name.toLowerCase();
-    const candidates = [
-      { names: ['apple','appel','granny smith','granny'], key: 'apple' },
-      { names: ['banana','banaan'], key: 'banana' },
-      { names: ['mandarin','mandarijn','tangerine','clementine'], key: 'mandarin' },
-      { names: ['grape','druif','druiven','grapes'], key: 'grapes' },
-      { names: ['strawberri','aardbei','strawberry','aardbeien'], key: 'strawberry' },
-      { names: ['blueberri','blauwe bes','blueberry','blauwebessen','blauwebessen'], key: 'blueberry' }
-    ];
-    let matched = null;
-    for(const c of candidates){
-      for(const n of c.names){ if(lname.indexOf(n)!==-1){ matched = c.key; break; } }
-      if(matched) break;
-    }
-    if(matched && kcalValue>0 && weightTable[matched]){
-      const perPortion = Math.round(kcalValue * (weightTable[matched] / 100));
-      const use = confirm(`Edamam toont ${kcalValue} kcal per 100 g voor "${name}". Omgerekend naar standaardportie (${weightTable[matched]} g) is dat ongeveer ${perPortion} kcal per portie.\n\nWil je deze waarde gebruiken als standaardportie? (OK = ja)`);
-      if(use){
-        db.unshift({ id, name: name + ' (uit Edamam)', kcal: perPortion });
-        saveDB(db);
-        refreshFruitSelect();
-        renderDbList();
-        alert('Toegevoegd aan lokale database met automatisch geconverteerde portie. Kies het item bij Fruit en voeg toe.');
-        return;
-      }
-    }
-    // Fallback: store as-per-100g
-    db.unshift({ id, name: name + ' (uit Edamam, per 100g)', kcal: kcalValue });
+    db.unshift({ id, name: name + ' (uit Edamam)', kcal: Math.round(kcal || 0) });
     saveDB(db);
     refreshFruitSelect();
     renderDbList();
-    alert('Toegevoegd aan lokale database. Kies het item bij Fruit en voeg toe.');
+    alert('Toegevoegd aan lokale database. Selecteer het item hierboven en klik “+ Voeg toe”.');
   }
 
   document.getElementById('refreshDb').addEventListener('click', function(){ refreshFruitSelect(); renderDbList(); });
