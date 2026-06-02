@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Orangefit - Lokale Database Beheer</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f8;margin:0;padding:18px}
+    .wrap{max-width:900px;margin:0 auto}
+    h1{color:#FF6F00;margin-bottom:6px}
+    .card{background:#fff;border-radius:10px;padding:14px;margin:10px 0;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #f3f3f3}
+    .muted{color:#666;font-size:13px}
+    input[type=text],input[type=number]{padding:8px;border:2px solid #FFE0B2;border-radius:6px;width:100%}
+    .row{display:flex;gap:8px}
+    .btn{display:inline-block;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .ghost{background:#fff;border:1px solid #ddd;color:#333}
+    .primary{background:#FF6F00;color:#fff}
+    .small{font-size:13px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    textarea{width:100%;height:100px;padding:8px;border:2px solid #EEE;border-radius:6px}
+    .danger{background:#D32F2F;color:#fff}
+    a.link{color:#1a73e8;text-decoration:none}
+    @media(max-width:600px){ .row{flex-direction:column} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Orangefit — Lokale Database</h1>
+    <div class="card">
+      <div class="muted">Deze beheerpagina bewerkt de dezelfde lokale database als de tracker (localStorage key: <code>orangefit_food_db_v1</code>).</div>
+      <div style="margin-top:10px" class="controls">
+        <button id="reloadBtn" class="btn ghost">Ververs lijst</button>
+        <button id="exportBtn" class="btn ghost">Exporteer JSON</button>
+        <button id="importBtn" class="btn ghost">Importeer JSON</button>
+        <button id="clearBtn" class="btn ghost">Maak default (herstelt standaard items)</button>
+        <a id="openTracker" class="btn primary link" href="orangefit-tracker.html">Open Tracker</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Huidige items</h3>
+      <div id="list"></div>
+    </div>
+
+    <div class="card">
+      <h3>Nieuw item toevoegen</h3>
+      <div style="margin-bottom:8px">Naam</div>
+      <input type="text" id="newName" placeholder="Bijv. Appel (middel)" />
+      <div style="margin-top:8px">Kcal per portie (geheel getal)</div>
+      <input type="number" id="newKcal" placeholder="Bijv. 95" />
+      <div style="margin-top:10px">ID (optioneel, anders automatisch)</div>
+      <input type="text" id="newId" placeholder="Bijv. apple_granny" />
+      <div style="margin-top:10px"><button id="addNew" class="btn primary">Voeg item toe</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Import / Export</h3>
+      <div class="muted">Exporteer de volledige DB als JSON of plak een JSON om te importeren.</div>
+      <textarea id="importArea" placeholder='Plak hier JSON voor import (een array van items: [{"id":"...","name":"...","kcal":95}])'></textarea>
+      <div style="margin-top:8px"><button id="doImport" class="btn primary">Voer import uit</button></div>
+    </div>
+  </div>
+
+  <script>
+    const DB_KEY = 'orangefit_food_db_v1';
+    const defaultItems = [
+      { id: 'apple_granny', name: 'Appel (Granny Smith, middel)', kcal: 95 },
+      { id: 'apple_red', name: 'Appel (rood, middel)', kcal: 95 },
+      { id: 'banana', name: 'Banaan (middel)', kcal: 105 },
+      { id: 'mandarin', name: 'Mandarijn (middel)', kcal: 47 },
+      { id: 'grapes', name: 'Druiven (handvol)', kcal: 55 },
+      { id: 'strawberries', name: 'Aardbeien (portie, 100 g)', kcal: 32 },
+      { id: 'blueberries', name: 'Blauwe bessen (portie, 100 g)', kcal: 57 }
+    ];
+
+    function loadDB(){
+      try{
+        const s = localStorage.getItem(DB_KEY);
+        if(!s){ localStorage.setItem(DB_KEY, JSON.stringify(defaultItems)); return defaultItems.slice(); }
+        return JSON.parse(s);
+      }catch(e){ console.error(e); localStorage.setItem(DB_KEY, JSON.stringify(defaultItems)); return defaultItems.slice(); }
+    }
+    function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+    function renderList(){
+      const list = document.getElementById('list');
+      const db = loadDB();
+      if(db.length===0){ list.innerHTML = '<div class="muted">Geen items in de DB</div>'; return; }
+      list.innerHTML = db.map(it=>{
+        return `<div class=\"list-item\" data-id=\"${it.id}\">`+
+               `<div style=\"flex:1;min-width:0;\"><strong style=\"display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${it.name}</strong><div class=\"muted small\">${it.kcal} kcal</div></div>`+
+               `<div style=\"display:flex;gap:8px;align-items:center\">`+
+               `<button class=\"btn ghost\" onclick=\"editItem('${it.id}')\">Bewerk</button>`+
+               `<button class=\"btn ghost\" onclick=\"duplicateItem('${it.id}')\">Dupliceer</button>`+
+               `<button class=\"btn danger\" onclick=\"removeItem('${it.id}')\">Verwijder</button>`+
+               `</div></div>`;
+      }).join('');
+    }
+
+    function removeItem(id){ if(!confirm('Weet je zeker dat je dit item wilt verwijderen?')) return; const db = loadDB().filter(i=>i.id!==id); saveDB(db); renderList(); }
+    function duplicateItem(id){ const db = loadDB(); const it = db.find(i=>i.id===id); if(!it) return; const copy = Object.assign({}, it); copy.id = it.id + '_copy_' + Date.now(); db.unshift(copy); saveDB(db); renderList(); }
+
+    function editItem(id){
+      const db = loadDB(); const it = db.find(i=>i.id===id); if(!it) return alert('Item niet gevonden');
+      const newName = prompt('Wijzig naam:', it.name); if(newName===null) return;
+      const newKcal = prompt('Wijzig kcal per portie (nummer):', String(it.kcal)); if(newKcal===null) return;
+      const nk = parseInt(newKcal,10); if(isNaN(nk)) return alert('Voer een geldig nummer in');
+      it.name = newName.trim(); it.kcal = nk; saveDB(db); renderList();
+    }
+
+    document.getElementById('addNew').addEventListener('click', function(){
+      const name = document.getElementById('newName').value.trim();
+      const kcal = parseInt(document.getElementById('newKcal').value,10);
+      let id = document.getElementById('newId').value.trim();
+      if(!name) return alert('Voer een naam in');
+      if(!kcal || isNaN(kcal)) return alert('Voer geldige kcal in');
+      if(!id){ id = name.toLowerCase().replace(/[^a-z0-9]+/g,'_') + '_' + Date.now(); }
+      const db = loadDB(); if(db.find(i=>i.id===id)) return alert('ID bestaat al, kies een andere ID');
+      db.unshift({ id, name, kcal }); saveDB(db); document.getElementById('newName').value=''; document.getElementById('newKcal').value=''; document.getElementById('newId').value=''; renderList(); alert('Item toegevoegd');
+    });
+
+    document.getElementById('reloadBtn').addEventListener('click', renderList);
+    document.getElementById('exportBtn').addEventListener('click', function(){ const db = loadDB(); const data = JSON.stringify(db, null, 2); const blob = new Blob([data],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'orangefit_db_export.json'; document.body.appendChild(a); a.click(); a.remove(); });
+
+    document.getElementById('clearBtn').addEventListener('click', function(){ if(!confirm('Herstel de DB naar standaard items? Dit overschrijft de huidige DB.')) return; saveDB(defaultItems.slice()); renderList(); alert('DB hersteld naar standaard items'); });
+
+    document.getElementById('importBtn').addEventListener('click', function(){ document.getElementById('importArea').focus(); });
+    document.getElementById('doImport').addEventListener('click', function(){ const txt = document.getElementById('importArea').value.trim(); if(!txt) return alert('Plak JSON in het veld hierboven'); try{ const parsed = JSON.parse(txt); if(!Array.isArray(parsed)) return alert('JSON moet een array van items zijn'); saveDB(parsed); renderList(); alert('Import succesvol'); }catch(e){ alert('JSON niet geldig: ' + e.message); } });
+
+    function ensureDBExists(){ if(!localStorage.getItem(DB_KEY)) saveDB(defaultItems.slice()); }
+
+    // init
+    ensureDBExists(); renderList();
+  </script>
+</body>
+</html>
