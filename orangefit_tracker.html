@@ -98,6 +98,34 @@
       <div><label class="muted">Verbrande kcal (sport)</label><input type="number" id="verbrand" min="0" value="0" oninput="update()" /></div>
       <div id="overigeTotal" class="muted" style="text-align:right;margin-top:6px"></div>
     </div>
+
+    <!-- Fruit -->
+    <div class="card">
+      <h3>🍏 Fruit</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="fruitSelect" style="flex:1">
+          <!-- options populated from local DB -->
+        </select>
+        <input type="number" id="fruitQty" min="1" value="1" style="width:80px;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
+        <button class="btn ghost" id="addFruitBtn">+ Voeg toe</button>
+      </div>
+      <div class="muted small" style="margin-top:8px">Standaard porties: appel (middel) = 95 kcal, banaan (middel) = 105 kcal, mandarijn = 47 kcal, druiven (handvol) = 69 kcal, aardbeien (100 g) = 32 kcal, blauwe bessen (100 g) = 57 kcal.</div>
+    </div>
+
+    <!-- Zoek voedsel & lokale database -->
+    <div class="card">
+      <h3>🔎 Zoek & Database</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="searchInput" placeholder="Typ productnaam (bv. Granny Smith)" style="flex:1;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
+        <button class="btn ghost" id="searchBtn">Zoek</button>
+        <button class="btn ghost" id="configureEdamam">Configureer Edamam</button>
+      </div>
+      <div id="searchResults" class="muted small" style="margin-top:6px"></div>
+      <hr style="margin:12px 0;border:none;border-top:1px solid #f3f3f3" />
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Lokale database</div><button class="btn ghost" id="refreshDb">Ververs</button></div>
+      <div id="dbList" style="margin-top:8px"></div>
+    </div>
+
     <!-- Einde-dag & verzenden -->
     <div class="card">
       <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
@@ -240,6 +268,174 @@
   function downloadCSV(){ const date=getDate(); const day=getDay(); const kcal=document.getElementById('total').textContent.split(' ')[0]; const csv='Datum,Dag,Kcal\n'+date+','+day+','+kcal; const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Orangefit_'+date+'.csv'; document.body.appendChild(a); a.click(); a.remove(); }
   function copyToClipboard(){ const date=getDate(); const day=getDay(); const kcal=document.getElementById('total').textContent.split(' ')[0]; navigator.clipboard.writeText(date+'\t'+day+'\t'+kcal).then(()=>alert('Gekopieerd! Plak in je Google Sheet.')).catch(()=>alert('Kopiëren mislukt')) }
   async function getSheetUrl(){ try{ const r = await fetch(SCRIPT_URL); const t = await r.text(); document.getElementById('sheetUrl').textContent = t || SHEET_URL; } catch(e){ document.getElementById('sheetUrl').textContent = SHEET_URL; } }
+  
+  /* ----------------------- Local DB & Food Search (Edamam) ----------------------- */
+  const DB_KEY = 'orangefit_food_db_v1';
+  const EDAMAM_KEY = 'edamam_config'; // stores {app_id, app_key}
+
+  // Default items with standard portions (per piece / serving) and weight table for conversions
+  const defaultItems = [
+    { id: 'apple_granny', name: 'Appel (Granny Smith, middel)', kcal: 95 },
+    { id: 'apple_red', name: 'Appel (rood, middel)', kcal: 95 },
+    { id: 'banana', name: 'Banaan (middel)', kcal: 105 },
+    { id: 'mandarin', name: 'Mandarijn (middel)', kcal: 47 },
+    { id: 'grapes', name: 'Druiven (handvol)', kcal: 55 },
+    { id: 'strawberries', name: 'Aardbeien (portie, 100 g)', kcal: 32 },
+    { id: 'blueberries', name: 'Blauwe bessen (portie, 100 g)', kcal: 57 }
+  ];
+
+  // Weight table (grams per standard portion) used to convert kcal-per-100g into kcal-per-portie
+  const weightTable = {
+    'apple': 182,       // middelgrote appel ≈ 182 g
+    'banana': 118,      // middelgrote banaan ≈ 118 g
+    'mandarin': 88,     // middelmatige mandarijn ≈ 88 g
+    'grapes': 80,       // handvol druiven ≈ 80 g
+    'strawberry': 100,  // portie aardbeien ≈ 100 g
+    'blueberry': 100    // portie blauwe bessen ≈ 100 g
+  };
+
+  // If user already provided Edamam credentials, prefill them (only set if not present)
+  if(!localStorage.getItem(EDAMAM_KEY)){
+    try{
+      localStorage.setItem(EDAMAM_KEY, JSON.stringify({ app_id: '4e385a00', app_key: '831ffa2e829d4b843872e96eefc82e34' }));
+      console.log('Edamam default credentials prefilled from user input.');
+    }catch(e){ console.error('Could not prefill Edamam creds', e); }
+  }
+
+  function loadDB(){
+    try{
+      const s = localStorage.getItem(DB_KEY);
+      if(!s) { localStorage.setItem(DB_KEY, JSON.stringify(defaultItems)); return defaultItems.slice(); }
+      return JSON.parse(s);
+    } catch(e){ console.error('DB load error', e); return defaultItems.slice(); }
+  }
+  function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+  // Populate fruit select
+  function refreshFruitSelect(){
+    const db = loadDB();
+    const sel = document.getElementById('fruitSelect');
+    sel.innerHTML = '';
+    db.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name + ' — ' + item.kcal + ' kcal';
+      sel.appendChild(opt);
+    });
+  }
+
+  // Render DB list
+  function renderDbList(){
+    const db = loadDB();
+    const el = document.getElementById('dbList');
+    el.innerHTML = db.map(it => `<div style="padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center"><div>${it.name} <span class=\"muted small\">(${it.kcal} kcal)</span></div><button class=\"btn ghost\" onclick=\"removeFromDb('${it.id}')\">Verwijder</button></div>`).join('');
+  }
+  function removeFromDb(id){ const db = loadDB().filter(i=>i.id!==id); saveDB(db); refreshFruitSelect(); renderDbList(); }
+
+  // Add selected fruit to current inputs (adds kcal to 'overig' field)
+  document.getElementById('addFruitBtn').addEventListener('click', function(){
+    const sel = document.getElementById('fruitSelect');
+    const qty = parseFloat(document.getElementById('fruitQty').value) || 1;
+    const db = loadDB();
+    const item = db.find(i=>i.id===sel.value);
+    if(!item) return alert('Selecteer een fruitsoort.');
+    // For items defined per piece, qty means pieces; for per 100g items, assume qty in 100g units
+    let kcalToAdd = item.kcal * qty;
+    // Add to 'overig' so it will be sent
+    const current = parseInt(document.getElementById('overig').value) || 0;
+    document.getElementById('overig').value = current + Math.round(kcalToAdd);
+    update();
+  });
+
+  // Search via Edamam (Food Database API) - requires app_id and app_key
+  async function edamamSearch(query){
+    const cfg = JSON.parse(localStorage.getItem(EDAMAM_KEY) || 'null');
+    if(!cfg || !cfg.app_id || !cfg.app_key) return { error: 'Edamam niet geconfigureerd. Klik op Configureer Edamam.' };
+    const url = `https://api.edamam.com/api/food-database/v2/parser?ingr=${encodeURIComponent(query)}&app_id=${cfg.app_id}&app_key=${cfg.app_key}`;
+    try{
+      const r = await fetch(url);
+      if(!r.ok) return { error: 'Edamam fout: ' + r.status };
+      const data = await r.json();
+      return { data };
+    } catch(e){ console.error('Edamam search error', e); return { error: e.message }; }
+  }
+
+  // UI handlers for search and configuring Edamam
+  document.getElementById('searchBtn').addEventListener('click', async function(){
+    const q = document.getElementById('searchInput').value.trim();
+    if(!q) return alert('Voer een zoekterm in.');
+    document.getElementById('searchResults').textContent = 'Zoeken...';
+    const res = await edamamSearch(q);
+    if(res.error){ document.getElementById('searchResults').textContent = res.error; return; }
+    const hits = res.data.parsed.concat(res.data.hints || []);
+    if(hits.length===0){ document.getElementById('searchResults').textContent = 'Geen resultaten.'; return; }
+    // Show first 6 results with 'add to DB' buttons
+    document.getElementById('searchResults').innerHTML = hits.slice(0,6).map((h,idx)=>{
+      const name = h.food.label || (h.food && h.food.foodId) || 'Onbekend';
+      const kcal = h.food.nutrients && (h.food.nutrients.ENERC_KCAL || h.food.nutrients.ENERC_KCAL) ? Math.round(h.food.nutrients.ENERC_KCAL) : '?';
+      const id = 'ed_' + (h.food.foodId || name).replace(/[^a-z0-9]/gi,'_').toLowerCase();
+      return `<div style=\"padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center\"><div><strong>${name}</strong><div class=\"muted small\">${kcal} kcal per 100 g (kijk goed naar portie)</div></div><button class=\"btn ghost\" onclick=\"addToDbFromSearch('${id}','${encodeURIComponent(name)}',${kcal})\">+ Voeg toe</button></div>`;
+    }).join('');
+  });
+
+  window.addToDbFromSearch = function(id, encodedName, kcal){
+    const name = decodeURIComponent(encodedName);
+    const db = loadDB();
+    if(db.find(i=>i.id===id)) return alert('Reeds toegevoegd.');
+    let kcalValue = kcal || 0;
+    // Attempt automatic conversion from per-100g to per-portie using weightTable
+    const lname = name.toLowerCase();
+    const candidates = [
+      { names: ['apple','appel','granny smith','granny'], key: 'apple' },
+      { names: ['banana','banaan'], key: 'banana' },
+      { names: ['mandarin','mandarijn','tangerine','clementine'], key: 'mandarin' },
+      { names: ['grape','druif','druiven','grapes'], key: 'grapes' },
+      { names: ['strawberri','aardbei','strawberry','aardbeien'], key: 'strawberry' },
+      { names: ['blueberri','blauwe bes','blueberry','blauwebessen','blauwebessen'], key: 'blueberry' }
+    ];
+    let matched = null;
+    for(const c of candidates){
+      for(const n of c.names){ if(lname.indexOf(n)!==-1){ matched = c.key; break; } }
+      if(matched) break;
+    }
+    if(matched && kcalValue>0 && weightTable[matched]){
+      const perPortion = Math.round(kcalValue * (weightTable[matched] / 100));
+      const use = confirm(`Edamam toont ${kcalValue} kcal per 100 g voor "${name}". Omgerekend naar standaardportie (${weightTable[matched]} g) is dat ongeveer ${perPortion} kcal per portie.\n\nWil je deze waarde gebruiken als standaardportie? (OK = ja)`);
+      if(use){
+        db.unshift({ id, name: name + ' (uit Edamam)', kcal: perPortion });
+        saveDB(db);
+        refreshFruitSelect();
+        renderDbList();
+        alert('Toegevoegd aan lokale database met automatisch geconverteerde portie. Kies het item bij Fruit en voeg toe.');
+        return;
+      }
+    }
+    // Fallback: store as-per-100g
+    db.unshift({ id, name: name + ' (uit Edamam, per 100g)', kcal: kcalValue });
+    saveDB(db);
+    refreshFruitSelect();
+    renderDbList();
+    alert('Toegevoegd aan lokale database. Kies het item bij Fruit en voeg toe.');
+  }
+
+  document.getElementById('refreshDb').addEventListener('click', function(){ refreshFruitSelect(); renderDbList(); });
+
+  document.getElementById('configureEdamam').addEventListener('click', function(){
+    const cfgStr = localStorage.getItem(EDAMAM_KEY) || '';
+    const cfg = cfgStr ? JSON.parse(cfgStr) : { app_id: '', app_key: '' };
+    const app_id = prompt('Voer Edamam app_id in:', cfg.app_id || '');
+    if(app_id===null) return;
+    const app_key = prompt('Voer Edamam app_key in:', cfg.app_key || '');
+    if(app_key===null) return;
+    localStorage.setItem(EDAMAM_KEY, JSON.stringify({ app_id, app_key }));
+    alert('Edamam geconfigureerd. Je kunt nu zoekopdrachten uitvoeren.');
+  });
+
+  // Utility: initialize DB UI
+  refreshFruitSelect();
+  renderDbList();
+
+  /* ----------------------- End DB & Search ----------------------- */
   
   // init
   update();
