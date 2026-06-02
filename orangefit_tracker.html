@@ -94,7 +94,7 @@
 
 <!-- Einde-dag & verzenden -->
 <div class="card">
-  <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
+  <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag</label>
   <div style="margin-top:8px"><button class="btn primary" id="sendBtn">📤 Verzend naar Google Sheet</button></div>
   <div style="margin-top:8px;display:flex;gap:8px"><button class="btn ghost" id="downloadBtn">📥 Download CSV</button><button class="btn secondary" id="copyBtn">📋 Kopieer voor Sheets</button></div>
   <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
@@ -102,16 +102,16 @@
 
 <!-- Google Sheet -->
 <div class="card">
-  <h3>🗂️ Google Sheet</h3>
+  <h3>🗂️ Google Sheet</h1>
   <div class="muted">Open je gekoppelde Google Sheet direct:</div>
   <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" id="openSheet" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank">Open Sheet</a><button class="btn ghost" id="getSheetUrl">Krijg Sheet URL</button></div>
   <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
 </div>
 
-<!-- Hidden DB Manager panel (Ctrl+M toggles) -->
+<!-- Hidden DB Manager (Ctrl+M) -->
 <div id="dbManager" class="card hidden" style="display:none">
   <h3>🔧 Lokale DB Beheer (Ctrl+M)</h3>
-  <div style="margin-bottom:8px" class="muted">Beheer items: toevoegen/bewerken/verwijderen, import/export en migratie.</div>
+  <div style="margin-bottom:8px" class="muted">Beheer hier de lokale DB: items toevoegen, bewerken, verwijderen, importeren/exporteren en migratie-logs.</div>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
     <input id="newId" placeholder="id (uniek)" style="width:160px;padding:6px" />
     <input id="newName" placeholder="Naam (bv. Appel (middel))" style="flex:1;padding:6px" />
