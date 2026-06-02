@@ -1,423 +1,98 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Orangefit Voedingstracker</title>
-  <style>
-    *{box-sizing:border-box}
-    body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#fff8f0,#f0f8ff);padding:14px;margin:0}
-    .wrap{max-width:960px;margin:0 auto}
-    h1{text-align:center;color:#FF6F00;margin:8px 0}
-    .total{font-size:46px;font-weight:800;text-align:center;margin:6px 0;color:#2E7D32}
-    .card{background:#fff;border-radius:10px;padding:12px;margin:10px 0;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-    .card h3{margin:6px 0 10px;color:#FF6F00}
-    .row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f3f3}
-    .row:last-child{border-bottom:none}
-    label{cursor:pointer}
-    input[type=checkbox]{width:18px;height:18px}
-    input[type=number],select,input[type=text]{width:100%;padding:8px;border:2px solid #FFE0B2;border-radius:6px}
-    input[type=range]{width:100%}
-    .btn{display:inline-block;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-    .primary{background:#FF6F00;color:#fff}
-    .ghost{background:#fff;border:1px solid #ddd;color:#333}
-    .secondary{background:#2E7D32;color:#fff}
-    .muted{color:#666;font-size:13px}
-    .flex{display:flex;gap:8px}
-    .small{font-size:13px}
-    .link{word-break:break-all;color:#1a73e8}
-    .hidden{display:none}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>🍊 Orangefit Voedingstracker</h1>
-    <div id="total" class="total">0 kcal</div>
-    <div style="text-align:center;margin:8px 0;padding:10px;background:#FFF3E0;border-radius:8px;border:2px solid #FFB74D">
-      <div class="muted" style="font-size:13px;margin-bottom:4px">Vandaag totaal verzonden</div>
-      <div id="dailyTotal" style="font-size:32px;font-weight:700;color:#E65100">0 kcal</div>
-    </div>
-
-    <!-- UI: main items (kept original) -->
-    <div class="card">
-      <h3>☀️ Ontbijt</h3>
-      <div class="row"><label><input type="checkbox" id="shake" onchange="update()"> Orangefit Diet Shake</label><span>230 kcal</span></div>
-      <div style="margin-top:8px">
-        <label class="muted">Aangemaakt met</label>
-        <select id="vloeistof" onchange="update()">
-          <option value="0">Water (0 kcal)</option>
-          <option value="30">Magere melk 300ml (+30 kcal)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🌿 Ochtend tussendoortje</h3>
-      <div class="row"><label><input type="checkbox" id="greensShake" onchange="update()"> Orangefit Greens Shake</label><span>10 kcal</span></div>
-      <div style="margin-top:8px">
-        <label class="muted">Koffie (ochtend)</label>
-        <div class="flex" style="margin-top:6px">
-          <input type="number" id="coffeeBlack" min="0" value="0" oninput="update()" placeholder="kopjes zwart" style="flex:1" />
-          <input type="number" id="coffeeMilk" min="0" value="0" oninput="update()" placeholder="kopjes met melk" style="flex:1" />
-        </div>
-        <div class="small muted" style="margin-top:6px">Zwart: 2 kcal/kopje • Met magere melk: 35 kcal/kopje</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🥗 Lunch</h3>
-      <div class="row"><label><input type="checkbox" id="lunch" onchange="update()"> Yoghurt/kwark + low-carb granola</label><span>275 kcal</span></div>
-      <div class="row"><label><input type="checkbox" id="bessen" onchange="update()"> Handje bessen</label><span>30 kcal</span></div>
-    </div>
-
-    <div class="card">
-      <h3>🧀 Middag Snack</h3>
-      <div class="row"><label><input type="checkbox" id="cracotte3" onchange="updateMutual(3)"> 3 Cracotte + 3 plakjes kaas</label><span>258 kcal</span></div>
-      <div class="row"><label><input type="checkbox" id="cracotte4" onchange="updateMutual(4)"> 4 Cracotte + 4 plakjes kaas</label><span>320 kcal</span></div>
-    </div>
-
-    <div class="card">
-      <h3>🍽️ Diner</h3>
-      <input type="number" id="diner" placeholder="Vul diner kcal in..." oninput="update()" />
-      <div class="flex" style="margin-top:8px">
-        <button class="btn ghost" onclick="setDiner(500)">500</button>
-        <button class="btn ghost" onclick="setDiner(600)">600</button>
-        <button class="btn ghost" onclick="setDiner(700)">700</button>
-        <button class="btn ghost" onclick="setDiner(800)">800</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🌙 Avond</h3>
-      <div style="margin-bottom:8px"><label class="muted">Avond snack</label><input type="range" id="avondSnack" min="0" max="50" value="0" oninput="update()" /></div>
-      <div style="margin-top:8px"><label class="muted">Nootjes (handjes)</label><input type="number" id="nootjes" min="0" value="0" oninput="update()" /></div>
-      <div id="nootjesTotal" class="muted" style="text-align:right;margin-top:6px"></div>
-    </div>
-
-    <!-- Fruit selection (populated from local DB) -->
-    <div class="card">
-      <h3>🍏 Fruit</h3>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="fruitSelect" style="flex:1"></select>
-        <input type="number" id="fruitQty" min="1" value="1" style="width:90px;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
-        <button class="btn ghost" id="addFruitBtn">+ Voeg toe</button>
-      </div>
-      <div class="muted small" style="margin-top:8px">Standaardporties per item (aanpasbaar via DB)</div>
-    </div>
-
-    <!-- Zoek & Database (gebruik Edamam wanneer geconfigureerd) -->
-    <div class="card">
-      <h3>🔎 Zoek & Database</h3>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input type="text" id="searchInput" placeholder="Typ productnaam (bv. Granny Smith)" style="flex:1;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
-        <button class="btn ghost" id="searchBtn">Zoek</button>
-        <button class="btn ghost" id="configureEdamam">Configureer Edamam</button>
-      </div>
-      <div id="searchResults" class="muted small" style="margin-top:6px"></div>
-      <hr style="margin:12px 0;border:none;border-top:1px solid #f3f3f3" />
-      <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Lokale database</div><button class="btn ghost" id="refreshDb">Ververs</button></div>
-      <div id="dbList" style="margin-top:8px"></div>
-    </div>
-
-    <!-- Einde-dag & verzenden -->
-    <div class="card">
-      <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
-      <div style="margin-top:8px"><button class="btn primary" id="sendBtn">📤 Verzend naar Google Sheet</button></div>
-      <div style="margin-top:8px;display:flex;gap:8px"><button class="btn ghost" id="downloadBtn">📥 Download CSV</button><button class="btn secondary" id="copyBtn">📋 Kopieer voor Sheets</button></div>
-      <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
-    </div>
-
-    <!-- sheet link -->
-    <div class="card">
-      <h3>🗂️ Google Sheet</h3>
-      <div class="muted">Open je gekoppelde Google Sheet direct:</div>
-      <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" id="openSheet" href="#" target="_blank">Open Sheet</a><button class="btn ghost" id="getSheetUrl">Krijg Sheet URL</button></div>
-      <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
-    </div>
+<!-- Aangepaste main items (porties) -->
+<div class="card">
+  <h3>☀️ Ontbijt</h3>
+  <div class="row"><label><input type="checkbox" id="shake" onchange="update()"> Orangefit Diet Shake</label><span>230 kcal</span></div>
+  <div style="margin-top:8px">
+    <label class="muted">Aangemaakt met</label>
+    <select id="vloeistof" onchange="update()">
+      <option value="0">Water (0 kcal)</option>
+      <option value="30">Magere melk 300ml (+30 kcal)</option>
+    </select>
   </div>
+</div>
 
-<script>
-// CONFIG
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyF5UPcE3nYPsEwnNk1hJ6UkH1-rJ9VGpEKNRgYzSdhuL3eZs8QDKKTLAHRAMuDfZaZ/exec';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing';
-const STORAGE_KEY = 'orangefit_daily_total';
-const DB_KEY = 'orangefit_food_db_v1';
-const EDAMAM_KEY = 'edamam_config';
+<div class="card">
+  <h3>🌿 Ochtend tussendoortje</h3>
+  <div class="row"><label><input type="checkbox" id="greensShake" onchange="update()"> Orangefit Greens Shake</label><span>10 kcal</span></div>
+  <div style="margin-top:8px">
+    <label class="muted">Koffie (ochtend)</label>
+    <div class="flex" style="margin-top:6px">
+      <input type="number" id="coffeeBlack" min="0" value="0" oninput="update()" placeholder="kopjes zwart" style="flex:1" />
+      <input type="number" id="coffeeMilk" min="0" value="0" oninput="update()" placeholder="kopjes met melk" style="flex:1" />
+    </div>
+    <div class="small muted" style="margin-top:6px">Zwart: 2 kcal/kopje • Met magere melk: 35 kcal/kopje</div>
+  </div>
+</div>
 
-// Pre-fill Edamam credentials (hardcoded as requested) if not present
-if(!localStorage.getItem(EDAMAM_KEY)){
-  localStorage.setItem(EDAMAM_KEY, JSON.stringify({ app_id: '4e385a00', app_key: '831ffa2e829d4b843872e96eefc82e34' }));
-  console.log('Edamam credentials prefilled in localStorage.');
-}
+<div class="card">
+  <h3>🥗 Lunch</h3>
+  <div class="row"><label><input type="checkbox" id="lunch" onchange="update()"> Yoghurt/kwark + low-carb granola</label><span>275 kcal</span></div>
+  <div class="row"><label><input type="checkbox" id="bessen" onchange="update()"> Handje bessen</label><span>30 kcal</span></div>
+</div>
 
-// Default DB (per-portie)
-const defaultItems = [
-  { id: 'apple_granny', name: 'Appel (Granny Smith, middel)', gramsPerPortion: 182, kcalPerPortion: 95 },
-  { id: 'apple_red', name: 'Appel (rood, middel)', gramsPerPortion: 182, kcalPerPortion: 95 },
-  { id: 'banana', name: 'Banaan (middel)', gramsPerPortion: 118, kcalPerPortion: 105 },
-  { id: 'mandarin', name: 'Mandarijn (middel)', gramsPerPortion: 88, kcalPerPortion: 47 },
-  { id: 'grapes', name: 'Druiven (handvol)', gramsPerPortion: 80, kcalPerPortion: 69 },
-  { id: 'strawberries', name: 'Aardbeien (portie)', gramsPerPortion: 100, kcalPerPortion: 32 },
-  { id: 'blueberries', name: 'Blauwe bessen (portie)', gramsPerPortion: 100, kcalPerPortion: 57 }
-];
+<div class="card">
+  <h3>🧀 Middag Snack</h3>
+  <div class="row"><label><input type="checkbox" id="cracotte3" onchange="updateMutual(3)"> 3 Cracotte + 3 plakjes kaas</label><span>258 kcal</span></div>
+  <div class="row"><label><input type="checkbox" id="cracotte4" onchange="updateMutual(4)"> 4 Cracotte + 4 plakjes kaas</label><span>320 kcal</span></div>
+</div>
 
-function loadDB(){
-  try{ const s = localStorage.getItem(DB_KEY); if(!s){ localStorage.setItem(DB_KEY, JSON.stringify(defaultItems)); return defaultItems.slice(); } return JSON.parse(s); }
-  catch(e){ console.error('loadDB error',e); return defaultItems.slice(); }
-}
-function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+<div class="card">
+  <h3>🍽️ Diner</h3>
+  <input type="number" id="diner" placeholder="Vul diner kcal in..." oninput="update()" />
+  <div class="flex" style="margin-top:8px">
+    <button class="btn ghost" onclick="setDiner(500)">500</button>
+    <button class="btn ghost" onclick="setDiner(600)">600</button>
+    <button class="btn ghost" onclick="setDiner(700)">700</button>
+    <button class="btn ghost" onclick="setDiner(800)">800</button>
+  </div>
+</div>
 
-// UI helpers
-function refreshFruitSelect(){
-  const db = loadDB();
-  const sel = document.getElementById('fruitSelect');
-  sel.innerHTML = '';
-  db.forEach(item=>{
-    const opt = document.createElement('option');
-    opt.value = item.id;
-    opt.textContent = item.name + ' — ' + (item.kcalPerPortion || '?') + ' kcal/portie';
-    sel.appendChild(opt);
-  });
-  renderDbList();
-}
+<div class="card">
+  <h3>🌙 Avond</h3>
+  <div style="margin-bottom:8px"><label class="muted">Avond snack</label><input type="range" id="avondSnack" min="0" max="50" value="0" oninput="update()" /></div>
+  <div style="margin-top:8px"><label class="muted">Nootjes (handjes)</label><input type="number" id="nootjes" min="0" value="0" oninput="update()" /></div>
+  <div id="nootjesTotal" class="muted" style="text-align:right;margin-top:6px"></div>
+</div>
 
-function renderDbList(){
-  const db = loadDB();
-  const el = document.getElementById('dbList');
-  el.innerHTML = db.map(it=>{
-    return `<div style="padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center">`+
-           `<div><strong>${it.name}</strong> <div class=\"muted small\">${it.kcalPerPortion} kcal per portie • ${it.gramsPerPortion} g</div></div>`+
-           `<div style=\"display:flex;gap:6px\"><button class=\"btn ghost\" onclick=\"openDbEditor('${it.id}')\">Bewerk</button><button class=\"btn ghost\" onclick=\"removeFromDb('${it.id}')\">Verwijder</button></div>`+
-           `</div>`;
-  }).join('');
-}
+<!-- Fruit: selectie + toevoeging (porties) -->
+<div class="card">
+  <h3>🍏 Fruit</h3>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="fruitSelect" style="flex:1"></select>
+    <input type="number" id="fruitQty" min="1" value="1" style="width:90px;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
+    <button class="btn ghost" id="addFruitBtn">+ Voeg toe</button>
+  </div>
+  <div class="muted small" style="margin-top:8px">Standaardporties per item (aanpasbaar via DB)</div>
+</div>
 
-function removeFromDb(id){ if(!confirm('Verwijder item uit lokale DB?')) return; const db = loadDB().filter(i=>i.id!==id); saveDB(db); refreshFruitSelect(); }
+<!-- Zoeken & DB ( Edamam + lokale DB ) -->
+<div class="card">
+  <h3>🔎 Zoek & Database</h3>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <input type="text" id="searchInput" placeholder="Typ productnaam (bv. Granny Smith)" style="flex:1;padding:8px;border:2px solid #FFE0B2;border-radius:6px" />
+    <button class="btn ghost" id="searchBtn">Zoek</button>
+    <button class="btn ghost" id="configureEdamam">Configureer Edamam</button>
+  </div>
+  <div id="searchResults" class="muted small" style="margin-top:6px"></div>
+  <hr style="margin:12px 0;border:none;border-top:1px solid #f3f3f3" />
+  <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Lokale database</div><button class="btn ghost" id="refreshDb">Ververs</button></div>
+  <div id="dbList" style="margin-top:8px"></div>
+</div>
 
-// Add fruit to overig (kcalPerPortion * qty)
-document.getElementById('addFruitBtn').addEventListener('click', ()=>{
-  const sel = document.getElementById('fruitSelect');
-  const qty = parseFloat(document.getElementById('fruitQty').value) || 1;
-  const db = loadDB();
-  const item = db.find(i=>i.id===sel.value);
-  if(!item){ alert('Selecteer een fruit item'); return; }
-  const kcal = Math.round((item.kcalPerPortion || 0) * qty);
-  const current = parseInt(document.getElementById('overig').value) || 0;
-  document.getElementById('overig').value = current + kcal;
-  update();
-});
+<div class="card">
+  <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
+  <div style="margin-top:8px"><button class="btn primary" id="sendBtn">📤 Verzend naar Google Sheet</button></div>
+  <div style="margin-top:8px;display:flex;gap:8px"><button class="btn ghost" id="downloadBtn">📥 Download CSV</button><button class="btn secondary" id="copyBtn">📋 Kopieer voor Sheets</button></div>
+  <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
+</div>
 
-// Basic food search via Edamam (Food Database parser)
-async function edamamSearch(query){
-  const cfg = JSON.parse(localStorage.getItem(EDAMAM_KEY) || 'null');
-  if(!cfg || !cfg.app_id || !cfg.app_key) return { error: 'Edamam niet geconfigureerd. Klik Configureer Edamam.' };
-  const url = `https://api.edamam.com/api/food-database/v2/parser?ingr=${encodeURIComponent(query)}&app_id=${cfg.app_id}&app_key=${cfg.app_key}`;
-  try{
-    const r = await fetch(url);
-    if(!r.ok) return { error: 'Edamam fout: ' + r.status };
-    const data = await r.json();
-    return { data };
-  }catch(e){ console.error('edamamSearch', e); return { error: e.message }; }
-}
+<div class="card" style="display:none" id="hiddenDbManagerInfo">
+  <p class="muted">Beheer van DB vindt in deze single file plaats (via Ctrl+M shortcut). Geen aparte pagina nodig als je kiest voor alles in dit bestand.</p>
+</div>
 
-// Map names to DB keys for automatic conversion
-const nameMap = [
-  { keys:['apple','appel','granny'],'id':'apple_granny' },
-  { keys:['red apple','red','rode appel'],'id':'apple_red' },
-  { keys:['banana','banaan'],'id':'banana' },
-  { keys:['mandarin','clementine','mandarijn'],'id':'mandarin' },
-  { keys:['grape','druif','druiven'],'id':'grapes' },
-  { keys:['strawberri','aardbei'],'id':'strawberries' },
-  { keys:['blueberri','blauwe bes'],'id':'blueberries' }
-];
-
-function detectMatchedId(label){ const l = label.toLowerCase(); for(const m of nameMap){ for(const k of m.keys) if(l.indexOf(k)!==-1) return m.id; } return null; }
-
-// Add item from search results into DB with optional conversion
-window.addToDbFromSearch = function(id, encodedName, kcalPer100g){
-  const name = decodeURIComponent(encodedName);
-  const db = loadDB();
-  if(db.find(i=>i.id===id)) return alert('Reeds toegevoegd.');
-  let kcalVal = Math.round(kcalPer100g || 0);
-  // try to match
-  const matched = detectMatchedId(name);
-  if(matched){
-    const standard = defaultItems.find(x=>x.id===matched) || null;
-    if(standard && standard.gramsPerPortion && kcalVal>0){
-      const perPortie = Math.round(kcalVal * (standard.gramsPerPortion/100));
-      const use = confirm(`Edamam toont ${kcalVal} kcal per 100 g voor "${name}". Omgerekend naar standaardportie (${standard.gramsPerPortion} g) = ${perPortie} kcal per portie. Gebruik deze waarde als portie?`);
-      if(use){
-        db.unshift({ id, name: name + ' (uit Edamam)', gramsPerPortion: standard.gramsPerPortion, kcalPerPortion: perPortie });
-        saveDB(db); notifyDbChange(); refreshFruitSelect(); alert('Toegevoegd met geconverteerde portie.'); return;
-      }
-    }
-  }
-  // fallback: store as per 100g value but prompt user to set gramsPerPortion
-  const setPort = confirm(`Edamam: ${kcalVal} kcal per 100 g voor "${name}". Wil je een standaard portie instellen (bv. 100 g) en opslaan? Kies Annuleer om later handmatig te bewerken.`);
-  if(setPort){
-    const grams = prompt('Voer grams per portie in (bijv. 100):', '100');
-    const gp = parseInt(grams)||100;
-    const pKcal = Math.round(kcalVal * (gp/100));
-    db.unshift({ id, name: name + ' (uit Edamam)', gramsPerPortion: gp, kcalPerPortion: pKcal });
-    saveDB(db); notifyDbChange(); refreshFruitSelect(); alert('Toegevoegd en opgeslagen.');
-  } else {
-    db.unshift({ id, name: name + ' (uit Edamam, per100g)', gramsPerPortion: 100, kcalPerPortion: kcalVal });
-    saveDB(db); notifyDbChange(); refreshFruitSelect(); alert('Toegevoegd (per100g). Pas later aan via DB beheer.');
-  }
-}
-
-// UI search button
-document.getElementById('searchBtn').addEventListener('click', async ()=>{
-  const q = document.getElementById('searchInput').value.trim(); if(!q) return alert('Voer zoekterm in');
-  const resEl = document.getElementById('searchResults'); resEl.textContent = 'Zoeken...';
-  const r = await edamamSearch(q);
-  if(r.error){ resEl.textContent = r.error; return; }
-  const parsed = r.data;
-  const hits = [].concat(parsed.parsed || [], parsed.hints || []);
-  if(hits.length===0){ resEl.textContent = 'Geen resultaten.'; return; }
-  resEl.innerHTML = hits.slice(0,8).map(h=>{
-    const food = h.food || h;
-    const name = (food.label||food.foodId||'Onbekend').replace(/"/g,'');
-    const kcal = Math.round((food.nutrients && food.nutrients.ENERC_KCAL) || 0);
-    const fid = 'ed_' + (food.foodId || name).replace(/[^a-z0-9]/gi,'_').toLowerCase();
-    return `<div style=\"padding:6px 4px;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center\"><div><strong>${name}</strong><div class=\"muted small\">${kcal} kcal per 100 g (controleer portie)</div></div><button class=\"btn ghost\" onclick=\"addToDbFromSearch('${fid}','${encodeURIComponent(name)}',${kcal})\">+ Voeg toe</button></div>`;
-  }).join('');
-});
-
-// Configure Edamam via prompts
-document.getElementById('configureEdamam').addEventListener('click', ()=>{
-  const cfgStr = localStorage.getItem(EDAMAM_KEY) || '{}';
-  const cfg = cfgStr ? JSON.parse(cfgStr) : { app_id:'', app_key:'' };
-  const app_id = prompt('Voer Edamam app_id in:', cfg.app_id || ''); if(app_id===null) return;
-  const app_key = prompt('Voer Edamam app_key in:', cfg.app_key || ''); if(app_key===null) return;
-  localStorage.setItem(EDAMAM_KEY, JSON.stringify({ app_id, app_key }));
-  alert('Edamam geconfigureerd.');
-});
-
-// DB editor pop-up (use orangefit-db.html or inline prompt)
-function openDbEditor(id){
-  const db = loadDB(); const item = db.find(i=>i.id===id); if(!item) return alert('Item niet gevonden');
-  const name = prompt('Naam', item.name) || item.name;
-  const grams = parseInt(prompt('Grams per portie', item.gramsPerPortion||100) || item.gramsPerPortion) || item.gramsPerPortion;
-  const kcal = parseInt(prompt('Kcal per portie', item.kcalPerPortion||0) || item.kcalPerPortion) || item.kcalPerPortion;
-  const idx = db.findIndex(x=>x.id===id); if(idx!==-1){ db[idx].name=name; db[idx].gramsPerPortion=grams; db[idx].kcalPerPortion=kcal; saveDB(db); notifyDbChange(); refreshFruitSelect(); alert('Opgeslagen'); }
-}
-
-// Refresh DB list button
-document.getElementById('refreshDb').addEventListener('click', ()=>{ refreshFruitSelect(); });
-
-// Send to Google Sheet (same behavior as original: computes delta and posts, using no-cors POST)
-async function sendToGoogleSheet(){
-  const consumed = computeConsumed();
-  const burned = parseInt(document.getElementById('verbrand').value) || 0;
-  const delta = consumed - burned;
-  const isEinde = document.getElementById('eindeDag').checked;
-  const params = new URLSearchParams();
-  params.append('datum', getDate()); params.append('dag', getDay()); params.append('kcal', delta); params.append('einde', isEinde ? 'true' : 'false');
-  document.getElementById('sendStatus').textContent = '⏳ Verzenden...';
-  try{
-    await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST', mode: 'no-cors' });
-    document.getElementById('sendStatus').textContent = '✅ Verzonden';
-    // update daily total
-    let current = loadDailyTotal();
-    if(isEinde){ current = 0; saveDailyTotal(current); updateDailyDisplay(current); document.getElementById('sendStatus').textContent = '✅ Dag afgesloten! Totaal gereset.'; }
-    else{ current += delta; saveDailyTotal(current); updateDailyDisplay(current); document.getElementById('sendStatus').textContent = '✅ Verzonden (+'+delta+' kcal)'; }
-    // Reset form fields
-    resetInputs();
-  }catch(err){ console.error('send error', err); document.getElementById('sendStatus').textContent = '❌ Fout bij verzenden'; }
-}
-
-function computeConsumed(){
-  let consumed = 0;
-  if(document.getElementById('shake').checked) consumed += 230;
-  consumed += parseInt(document.getElementById('vloeistof').value) || 0;
-  if(document.getElementById('greensShake')?.checked) consumed += 10;
-  consumed += (parseInt(document.getElementById('coffeeBlack').value)||0)*2;
-  consumed += (parseInt(document.getElementById('coffeeMilk').value)||0)*35;
-  if(document.getElementById('lunch').checked) consumed += 275;
-  if(document.getElementById('bessen').checked) consumed += 30;
-  if(document.getElementById('cracotte3').checked) consumed += 258;
-  if(document.getElementById('cracotte4').checked) consumed += 320;
-  consumed += parseInt(document.getElementById('diner').value) || 0;
-  consumed += parseInt(document.getElementById('avondSnack').value) || 0;
-  consumed += (parseInt(document.getElementById('nootjes').value)||0) * 180;
-  consumed += parseInt(document.getElementById('overig').value) || 0;
-  return consumed;
-}
-
-function resetInputs(){
-  // uncheck and reset all inputs except daily total and DB
-  ['shake','greensShake','lunch','bessen','cracotte3','cracotte4','eindeDag'].forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=false; });
-  ['vloeistof','coffeeBlack','coffeeMilk','diner','avondSnack','nootjes','overig','verbrand'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = (el.type==='range' || el.type==='number') ? '0' : ''; });
-  document.getElementById('vloeistof').value='0';
-  update();
-}
-
-// Download / copy utilities
-document.getElementById('downloadBtn').addEventListener('click', ()=>{ const csv = `Datum,Dag,Kcal\n${getDate()},${getDay()},${document.getElementById('total').textContent.split(' ')[0]}`; const blob = new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Orangefit_'+getDate()+'.csv'; document.body.appendChild(a); a.click(); a.remove(); });
-
-document.getElementById('copyBtn').addEventListener('click', ()=>{ const text = `${getDate()}\t${getDay()}\t${document.getElementById('total').textContent.split(' ')[0]}`; navigator.clipboard.writeText(text).then(()=>alert('Gekopieerd!')).catch(()=>alert('Kopiëren mislukt')); });
-
-document.getElementById('getSheetUrl').addEventListener('click', async ()=>{ try{ const r = await fetch(SCRIPT_URL); const t = await r.text(); document.getElementById('sheetUrl').textContent = t || SHEET_URL; document.getElementById('openSheet').href = t || SHEET_URL; }catch(e){ document.getElementById('sheetUrl').textContent = SHEET_URL; document.getElementById('openSheet').href = SHEET_URL; } });
-
-// Date helpers
-function pad(n){ return n<10? '0'+n : n }
-function getDate(){ const d=new Date(); return pad(d.getDate()) + '-' + pad(d.getMonth()+1) + '-' + d.getFullYear(); }
-function getDay(){ const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag']; return days[new Date().getDay()]; }
-
-// Update shown total and color
-function update(){
-  let total = computeConsumed();
-  const verbrand = parseInt(document.getElementById('verbrand').value) || 0;
-  const net = total - verbrand;
-  document.getElementById('total').textContent = net + ' kcal';
-  let color = '#2E7D32'; if(net>2200) color='#D32F2F'; else if(net>1800) color='#FFA726'; document.getElementById('total').style.color = color;
-  // nootjes display
-  const nootjes = parseInt(document.getElementById('nootjes').value) || 0;
-  document.getElementById('nootjesTotal').textContent = nootjes>0? (nootjes+' handje(s) ≈ '+(nootjes*180)+' kcal') : '';
-  // overigeTotal
-  const overig = parseInt(document.getElementById('overig').value) || 0;
-  document.getElementById('overigeTotal') && (document.getElementById('overigeTotal').textContent = overig>0 ? overig+' kcal' : '');
-}
-
-function updateMutual(which){ if(which===3) document.getElementById('cracotte4').checked=false; if(which===4) document.getElementById('cracotte3').checked=false; update(); }
-function setDiner(v){ document.getElementById('diner').value=v; update(); }
-
-// Daily total persistence
-function loadDailyTotal(){ const s = localStorage.getItem(STORAGE_KEY); return s ? parseInt(s,10):0; }
-function saveDailyTotal(v){ localStorage.setItem(STORAGE_KEY, v.toString()); }
-function updateDailyDisplay(v){ document.getElementById('dailyTotal').textContent = v + ' kcal'; }
-
-// Storage event listener for real-time DB sync
-window.addEventListener('storage', (e)=>{
-  if(e.key === DB_KEY){ console.log('DB changed elsewhere, refreshing'); refreshFruitSelect(); }
-  if(e.key === EDAMAM_KEY){ console.log('Edamam config changed'); }
-  if(e.key === STORAGE_KEY){ updateDailyDisplay(loadDailyTotal()); }
-});
-
-// Notify other windows/tabs that DB changed (useful when same-tab editors save)
-function notifyDbChange(){ try{ localStorage.setItem(DB_KEY, localStorage.getItem(DB_KEY)); }catch(e){ console.error(e); } }
-
-// Small fallback: poll for DB changes every 3s (covers same-window edits via JS prompts)
-let lastDb = localStorage.getItem(DB_KEY);
-setInterval(()=>{ const cur = localStorage.getItem(DB_KEY); if(cur !== lastDb){ lastDb = cur; refreshFruitSelect(); } }, 3000);
-
-// Initialize UI
-refreshFruitSelect(); update(); updateDailyDisplay(loadDailyTotal());
-
-// Attach send button
-document.getElementById('sendBtn').addEventListener('click', sendToGoogleSheet);
-
-// Configure Edamam: keep prompts as implemented earlier (already set)
-
-// Helper to open DB management page in a new tab (hidden control: no visible button in tracker)
-function openDb(){ window.open('orangefit-db.html', '_blank'); }
-
-// Expose openDb to a keyboard shortcut (Ctrl+M) so the DB manager can be opened without a visible link
-window.addEventListener('keydown', function(e){ if(e.ctrlKey && e.key.toLowerCase()==='m'){ openDb(); } });
-
-// Expose some functions globally for debug
-window.orangefit = { loadDB, saveDB, refreshFruitSelect, notifyDbChange };
-</script>
-</body>
-</html>
+<div class="card">
+  <h3>🗂️ Google Sheet</h3>
+  <div class="muted">Open je gekoppelde Google Sheet direct:</div>
+  <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank" id="openSheetLink">Open Sheet</a><button class="btn ghost" onclick="getSheetUrl()">Krijg Sheet URL</button></div>
+  <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
+</div>
