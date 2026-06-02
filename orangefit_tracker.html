@@ -1,4 +1,4 @@
-<!-- Main inputs -->
+<!-- Ontbijt -->
 <div class="card">
   <h3>☀️ Ontbijt</h3>
   <div class="row"><label><input type="checkbox" id="shake" onchange="update()"> Orangefit Diet Shake</label><span>230 kcal</span></div>
@@ -11,6 +11,7 @@
   </div>
 </div>
 
+<!-- Ochtend tussendoortje -->
 <div class="card">
   <h3>🌿 Ochtend tussendoortje</h3>
   <div class="row"><label><input type="checkbox" id="greensShake" onchange="update()"> Orangefit Greens Shake</label><span>10 kcal</span></div>
@@ -24,18 +25,21 @@
   </div>
 </div>
 
+<!-- Lunch -->
 <div class="card">
   <h3>🥗 Lunch</h3>
   <div class="row"><label><input type="checkbox" id="lunch" onchange="update()"> Yoghurt/kwark + low-carb granola</label><span>275 kcal</span></div>
   <div class="row"><label><input type="checkbox" id="bessen" onchange="update()"> Handje bessen</label><span>30 kcal</span></div>
 </div>
 
+<!-- Middag Snack -->
 <div class="card">
   <h3>🧀 Middag Snack</h3>
   <div class="row"><label><input type="checkbox" id="cracotte3" onchange="updateMutual(3)"> 3 Cracotte + 3 plakjes kaas</label><span>258 kcal</span></div>
   <div class="row"><label><input type="checkbox" id="cracotte4" onchange="updateMutual(4)"> 4 Cracotte + 4 plakjes kaas</label><span>320 kcal</span></div>
 </div>
 
+<!-- Diner -->
 <div class="card">
   <h3>🍽️ Diner</h3>
   <input type="number" id="diner" placeholder="Vul diner kcal in..." oninput="update()" />
@@ -47,6 +51,7 @@
   </div>
 </div>
 
+<!-- Avond -->
 <div class="card">
   <h3>🌙 Avond</h3>
   <div style="margin-bottom:8px"><label class="muted">Avond snack</label><input type="range" id="avondSnack" min="0" max="50" value="0" oninput="update()" /></div>
@@ -54,7 +59,15 @@
   <div id="nootjesTotal" class="muted" style="text-align:right;margin-top:6px"></div>
 </div>
 
-<!-- Fruit selection -->
+<!-- Overige & Sport -->
+<div class="card">
+  <h3>🍴 Overige & Sport</h3>
+  <div style="margin-bottom:8px"><label class="muted">Overige voeding (kcal)</label><input type="number" id="overig" min="0" value="0" oninput="update()" /></div>
+  <div><label class="muted">Verbrande kcal (sport)</label><input type="number" id="verbrand" min="0" value="0" oninput="update()" /></div>
+  <div id="overigeTotal" class="muted" style="text-align:right;margin-top:6px"></div>
+</div>
+
+<!-- Fruit -->
 <div class="card">
   <h3>🍏 Fruit</h3>
   <div style="display:flex;gap:8px;align-items:center">
@@ -65,7 +78,7 @@
   <div class="muted small" style="margin-top:8px">Standaardporties per item (aanpasbaar via Ctrl+M beheer)</div>
 </div>
 
-<!-- Search & DB -->
+<!-- Zoek & Database -->
 <div class="card">
   <h3>🔎 Zoek & Database</h3>
   <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -79,6 +92,7 @@
   <div id="dbList" style="margin-top:8px"></div>
 </div>
 
+<!-- Einde-dag & verzenden -->
 <div class="card">
   <label><input type="checkbox" id="eindeDag"> Dit is mijn laatste invoer van vandaag (bereken status)</label>
   <div style="margin-top:8px"><button class="btn primary" id="sendBtn">📤 Verzend naar Google Sheet</button></div>
@@ -86,16 +100,18 @@
   <div id="sendStatus" class="muted" style="text-align:center;margin-top:8px;font-weight:700"></div>
 </div>
 
+<!-- Google Sheet -->
 <div class="card">
   <h3>🗂️ Google Sheet</h3>
   <div class="muted">Open je gekoppelde Google Sheet direct:</div>
-  <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" id="openSheetLink" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank">Open Sheet</a><button class="btn ghost" id="getSheetUrl">Krijg Sheet URL</button></div>
+  <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" id="openSheet" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank">Open Sheet</a><button class="btn ghost" id="getSheetUrl">Krijg Sheet URL</button></div>
   <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
 </div>
 
-<div class="card hidden" id="dbManager" style="display:none">
+<!-- Hidden DB Manager panel (Ctrl+M toggles) -->
+<div id="dbManager" class="card hidden" style="display:none">
   <h3>🔧 Lokale DB Beheer (Ctrl+M)</h3>
-  <div style="margin-bottom:8px" class="muted">In dit paneel kun je items toevoegen, bewerken, importeren/exporteren en migratie-informatie bekijken. (Verborgen: open met Ctrl+M)</div>
+  <div style="margin-bottom:8px" class="muted">Beheer items: toevoegen/bewerken/verwijderen, import/export en migratie.</div>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
     <input id="newId" placeholder="id (uniek)" style="width:160px;padding:6px" />
     <input id="newName" placeholder="Naam (bv. Appel (middel))" style="flex:1;padding:6px" />
