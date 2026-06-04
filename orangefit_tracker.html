@@ -130,7 +130,7 @@
     <div class="card">
       <h3>🗂️ Google Sheet</h3>
       <div class="muted">Open je gekoppelde Google Sheet direct:</div>
-      <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" href="#" id="openSheet">Open Sheet</a><button class="btn ghost" id="getSheetUrlBtn">Krijg Sheet URL</button></div>
+      <div style="margin-top:8px;display:flex;gap:8px"><a class="btn ghost" href="https://docs.google.com/spreadsheets/d/10nyyF7sjxavr-om1NS8R-jgcBQChZ6Ao55Xcin1WSpA/edit?usp=sharing" target="_blank" rel="noopener" id="openSheet">Open Sheet</a><button class="btn ghost" id="getSheetUrlBtn" type="button">Krijg Sheet URL</button></div>
       <div id="sheetUrl" class="muted" style="margin-top:8px;word-break:break-all"></div>
     </div>
   </div>
@@ -226,7 +226,8 @@
   document.getElementById('configureEdamam').addEventListener('click', function(){ const cfg = JSON.parse(localStorage.getItem(EDAMAM_KEY) || 'null') || {}; const app_id = prompt('Edamam app_id oog', cfg.app_id||''); if(app_id===null) return; const app_key = prompt('Edamam app_key', cfg.app_key||''); if(app_key===null) return; localStorage.setItem(EDAMAM_KEY, JSON.stringify({ app_id, app_key })); alert('Edamam credentials opgeslagen.'); });
 
   // DB management shortcuts (open beheer pagina) - keep existing
-  document.getElementById('openSheet').href = SHEET_URL;
+  // openSheet href is set directly in the HTML to avoid jumping to top
+  // document.getElementById('openSheet').href = SHEET_URL;
   document.getElementById('getSheetUrlBtn').addEventListener('click', getSheetUrl);
   function getSheetUrl(){ alert('Sheet URL:
 '+SHEET_URL); document.getElementById('sheetUrl').textContent = SHEET_URL; }
